@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بازی آنلاین جبهه و سنگر - اسنایپر ۴ نفره</title>
+    <title>فرار از ام‌عباس! - بازی تعقیب و گریز</title>
     <style>
         body {
             margin: 0;
@@ -17,44 +17,6 @@
             height: 100vh;
             display: block;
         }
-        #menu {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(30, 25, 20, 0.95);
-            padding: 25px;
-            border-radius: 12px;
-            color: #d4af37;
-            text-align: center;
-            border: 2px solid #554422;
-            z-index: 10;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.9);
-            max-width: 90%;
-        }
-        input, button {
-            padding: 12px;
-            font-size: 16px;
-            margin: 8px;
-            border-radius: 6px;
-            border: none;
-        }
-        button {
-            background: #654321;
-            color: #ffebcd;
-            cursor: pointer;
-            font-weight: bold;
-            border: 1px solid #8b5a2b;
-        }
-        button:active {
-            background: #4a3018;
-        }
-        input {
-            background: #1a1510;
-            color: white;
-            border: 1px solid #654321;
-            text-align: center;
-        }
         #ui {
             position: absolute;
             top: 15px;
@@ -63,90 +25,55 @@
             background: rgba(40, 30, 20, 0.8);
             padding: 12px;
             border-radius: 8px;
-            display: none;
             pointer-events: none;
             border: 1px solid #654321;
+            font-size: 16px;
         }
-        /* دوربین اسنایپر نظامی */
-        #scope {
+        #message-box {
             position: absolute;
-            top: 50%;
+            top: 20%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 320px;
-            height: 320px;
-            border: 5px solid #1a1a1a;
-            border-radius: 50%;
-            box-shadow: 0 0 0 9999px rgba(10, 10, 10, 0.92);
+            color: #ff4500;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
             display: none;
             pointer-events: none;
+            text-align: center;
         }
-        #scope::before, #scope::after {
-            content: '';
-            position: absolute;
-            background: #00ff00; /* خطوط دوربین به رنگ دید در شب / نظامی */
-        }
-        #scope::before { top: 50%; left: 0; width: 100%; height: 2px; transform: translateY(-50%); }
-        #scope::after { top: 0; left: 50%; width: 2px; height: 100%; transform: translateX(-50%); }
-
         .controls {
             position: absolute;
             bottom: 20px;
             left: 20px;
             display: grid;
-            grid-template-columns: repeat(3, 55px);
+            grid-template-columns: repeat(3, 60px);
             gap: 5px;
-            display: none;
         }
         .btn {
-            background: rgba(101, 67, 33, 0.6);
+            background: rgba(101, 67, 33, 0.7);
             border: 2px solid #8b5a2b;
             color: white;
-            height: 55px;
-            font-size: 18px;
+            height: 60px;
+            font-size: 20px;
             border-radius: 8px;
-        }
-        #action-panel {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            display: none;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .action-btn {
-            padding: 15px 20px;
-            font-size: 16px;
-            border-radius: 10px;
-            border: 2px solid #8b5a2b;
             cursor: pointer;
-            font-weight: bold;
         }
-        #fire-btn { background: #8b0000; color: white; }
-        #zoom-btn { background: #2f4f4f; color: white; }
+        .btn:active {
+            background: rgba(74, 48, 24, 0.9);
+        }
     </style>
 </head>
 <body>
 
-    <!-- منوی جنگی -->
-    <div id="menu">
-        <h2>منطقه جنگی: خط مقدم جبهه</h2>
-        <p>برای ورود به منطقه نبرد و کمپ در سنگرها آماده شوید:</p>
-        <button onclick="hostGame()">برپایی سنگر جدید (میزبان)</button><br>
-        <div id="my-id-display" style="color: #00ffcc; font-weight: bold; font-size: 18px; margin: 10px 0;"></div>
-        <hr style="border-color: #554422; margin: 15px 0;">
-        <input type="text" id="host-id-input" placeholder="کد سنگر فرمانده را وارد کنید"><br>
-        <button onclick="joinGame()">ورود به سنگر همرزمان</button>
-    </div>
-
     <div id="ui">
-        رزمندگان متصل: <span id="player-count">1</span> / 4<br>
-        وضعیت: <span id="status">در انتظار استقرار نیروها...</span>
+        وضعیت: <span id="status">فرار کنید! ام‌عباس دنبال شماست...</span><br>
+        تعداد ماچ‌ها: <span id="kiss-count">0</span>
     </div>
 
-    <div id="scope"></div>
+    <div id="message-box">😘 ام‌عباس گرفتت و ماچت کرد! موچ موچ! 😘</div>
 
-    <div class="controls" id="touch-controls">
+    <div class="controls">
         <div></div>
         <button class="btn" onclick="move('forward')">⬆️</button>
         <div></div>
@@ -155,200 +82,114 @@
         <button class="btn" onclick="move('right')">➡️</button>
     </div>
 
-    <div id="action-panel">
-        <button class="action-btn" id="fire-btn" onclick="shoot()">شلیک آتشین 🎯</button>
-        <button class="action-btn" id="zoom-btn" onclick="toggleScope()">دوربین اسنایپر 🔍</button>
-    </div>
-
     <div id="canvas-container"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script>
-        let peer, conn;
-        let isHost = false;
-        let connections = [];
         let scene, camera, renderer;
-        let playerSpheres = {};
-        let isScopeActive = false;
-        let myPos = { x: 0, z: 0 };
+        let umAbbas;
+        let kissCount = 0;
+        let myPos = { x: 0, z: 5 };
+        let umAbbasPos = { x: 0, z: -15 };
+        let isCaught = false;
 
-        function initGameUI() {
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('ui').style.display = 'block';
-            document.getElementById('touch-controls').style.display = 'grid';
-            document.getElementById('action-panel').style.display = 'flex';
-            init3D();
-        }
-
-        function hostGame() {
-            document.getElementById('my-id-display').innerText = "در حال ایجاد بیس جنگی...";
-            peer = new Peer();
-            
-            peer.on('open', (id) => {
-                isHost = true;
-                document.getElementById('my-id-display').innerText = "کد سنگر شما: " + id;
-                document.getElementById('status').innerText = "سنگر آماده است. منتظر رزمندگان باشید...";
-            });
-
-            peer.on('error', (err) => {
-                alert("خطا در شبکه: " + err);
-            });
-
-            peer.on('connection', (incomingConn) => {
-                if (connections.length < 3) {
-                    connections.push(incomingConn);
-                    document.getElementById('player-count').innerText = connections.length + 1;
-                    
-                    incomingConn.on('data', (data) => {
-                        updateRemotePlayer(incomingConn.peer, data);
-                        connections.forEach(c => { if(c.peer !== incomingConn.peer) c.send(data); });
-                    });
-                }
-            });
-            initGameUI();
-        }
-
-        function joinGame() {
-            const hostId = document.getElementById('host-id-input').value.trim();
-            if (!hostId) return alert('کد سنگر را وارد کنید!');
-
-            peer = new Peer();
-            peer.on('open', () => {
-                conn = peer.connect(hostId);
-                conn.on('open', () => {
-                    initGameUI();
-                    document.getElementById('status').innerText = "به خط مقدم ملحق شدید!";
-                });
-                conn.on('error', () => {
-                    alert("سنگر پیدا نشد.");
-                });
-                conn.on('data', (data) => {
-                    if(data.type === 'shoot') {
-                        triggerShootEffect(data.id);
-                    } else {
-                        updateRemotePlayer(data.id, data);
-                    }
-                });
-            });
-        }
-
-        function init3D() {
+        function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x3a3328); // آسمان غبارآلود و خاکی جبهه
-            scene.fog = new THREE.FogExp2(0x3a3328, 0.025);
+            scene.background = new THREE.Color(0x3a3328);
+            scene.fog = new THREE.FogExp2(0x3a3328, 0.03);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 3, 5);
+            camera.position.set(myPos.x, 3, myPos.z);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // نورپردازی میدان جنگ (آفتاب مایل و نیمه تاریک)
+            // نورپردازی
             const light = new THREE.DirectionalLight(0xd4af37, 0.8);
             light.position.set(20, 30, 20);
             scene.add(light);
             scene.add(new THREE.AmbientLight(0x554433, 0.6));
 
-            // زمین خاکی و ناهموار جبهه
+            // زمین خاکی
             const floor = new THREE.Mesh(
-                new THREE.PlaneGeometry(120, 120),
-                new THREE.MeshStandardMaterial({ color: 0x4a3b2c, roughness: 0.95 })
+                new THREE.PlaneGeometry(100, 100),
+                new THREE.MeshStandardMaterial({ color: 0x4a3b2c, roughness: 0.9 })
             );
             floor.rotation.x = -Math.PI / 2;
             scene.add(floor);
 
-            // --- ساخت سنگرها و موانع برای کمپ کردن ---
-            createBunkers();
+            // ساخت مدل ام‌عباس (پیرزن با چادر یا لباس سنتی)
+            const group = new THREE.Group();
+            
+            // بدن پیرزن
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x554433 });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2, 1), bodyMat);
+            body.position.y = 1;
+            group.add(body);
+
+            // سر پیرزن
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), headMat);
+            head.position.y = 2.3;
+            group.add(head);
+
+            umAbbas = group;
+            umAbbas.position.set(umAbbasPos.x, 0, umAbbasPos.z);
+            scene.add(umAbbas);
 
             animate();
         }
 
-        function createBunkers() {
-            const bunkerMat = new THREE.MeshStandardMaterial({ color: 0x2b261f, roughness: 0.9 });
-            const sandbagMat = new THREE.MeshStandardMaterial({ color: 0x7c7259, roughness: 0.8 });
-
-            // ساخت سنگرهای بتنی و خاکریز در اطراف نقشه برای کمپ کردن
-            const positions = [
-                { x: -8, z: -10, w: 6, h: 3, d: 2 },
-                { x: 10, z: -15, w: 8, h: 3, d: 2 },
-                { x: -5, z: -25, w: 5, h: 4, d: 3 },
-                { x: 12, z: -30, w: 7, h: 3, d: 2 }
-            ];
-
-            positions.forEach(pos => {
-                const bunkerGeo = new THREE.BoxGeometry(pos.w, pos.h, pos.d);
-                const bunker = new THREE.Mesh(bunkerGeo, bunkerMat);
-                bunker.position.set(pos.x, pos.h / 2, pos.z);
-                scene.add(bunker);
-
-                // اضافه کردن کیسه شن جلو سنگر برای کمپ
-                const bagGeo = new THREE.BoxGeometry(pos.w, 1, 1);
-                const bags = new THREE.Mesh(bagGeo, sandbagMat);
-                bags.position.set(pos.x, 0.5, pos.z + 1.5);
-                scene.add(bags);
-            });
-        }
-
         function move(dir) {
-            if (dir === 'left') myPos.x -= 1;
-            if (dir === 'right') myPos.x += 1;
-            if (dir === 'forward') myPos.z -= 1;
-            if (dir === 'backward') myPos.z += 1;
+            if (isCaught) return;
+
+            if (dir === 'left') myPos.x -= 1.5;
+            if (dir === 'right') myPos.x += 1.5;
+            if (dir === 'forward') myPos.z -= 1.5;
+            if (dir === 'backward') myPos.z += 1.5;
 
             camera.position.x = myPos.x;
-            camera.position.z = myPos.z + 5;
-
-            sendDataToOthers({ id: peer.id, x: myPos.x, z: myPos.z });
-        }
-
-        function shoot() {
-            const flash = document.createElement('div');
-            flash.style.position = 'fixed';
-            flash.style.top = '0'; flash.style.left = '0'; flash.style.width = '100vw'; flash.style.height = '100vh';
-            flash.style.background = 'rgba(255, 200, 100, 0.4)';
-            flash.style.zIndex = '999';
-            document.body.appendChild(flash);
-            setTimeout(() => flash.remove(), 100);
-
-            sendDataToOthers({ id: peer.id, type: 'shoot' });
-        }
-
-        function triggerShootEffect(id) {
-            console.log("تیراندازی از سمت سنگر همرزم: " + id);
-        }
-
-        function sendDataToOthers(data) {
-            if (isHost) {
-                connections.forEach(c => c.send(data));
-            } else if (conn && conn.open) {
-                conn.send(data);
-            }
-        }
-
-        function updateRemotePlayer(id, data) {
-            if (!playerSpheres[id]) {
-                // شکل سرباز / اسنایپر در خط مقدم
-                const mat = new THREE.MeshStandardMaterial({ color: 0x3b4d3c }); // لباس استتار نظامی
-                const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), mat);
-                scene.add(mesh);
-                playerSpheres[id] = mesh;
-            }
-            playerSpheres[id].position.set(data.x, 1, data.z);
-        }
-
-        function toggleScope() {
-            isScopeActive = !isScopeActive;
-            document.getElementById('scope').style.display = isScopeActive ? 'block' : 'none';
-            camera.fov = isScopeActive ? 12 : 75; // زوم بسیار بالا برای تک تیرانداز جبهه
-            camera.updateProjectionMatrix();
+            camera.position.z = myPos.z;
         }
 
         function animate() {
             requestAnimationFrame(animate);
+
+            if (!isCaught) {
+                // هوش مصنوعی تعقیب‌کننده ام‌عباس (حرکت به سمت بازیکن)
+                const dx = myPos.x - umAbbasPos.x;
+                const dz = myPos.z - umAbbasPos.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist > 1) {
+                    // سرعت دنبال کردن ام‌عباس
+                    umAbbasPos.x += (dx / dist) * 0.04;
+                    umAbbasPos.z += (dz / dist) * 0.04;
+                    umAbbas.position.set(umAbbasPos.x, 0, umAbbasPos.z);
+                    umAbbas.lookAt(camera.position.x, umAbbas.position.y, camera.position.z);
+                } else {
+                    // وقتی ام‌عباس به شما می‌رسد و ماچتان می‌کند!
+                    isCaught = true;
+                    kissCount++;
+                    document.getElementById('kiss-count').innerText = kissCount;
+                    document.getElementById('message-box').style.display = 'block';
+                    document.getElementById('status').innerText = 'ام‌عباس به شما رسید!';
+
+                    // بعد از ۲ ثانیه ام‌عباس عقبنشینی می‌کند تا دوباره فرار کنید
+                    setTimeout(() => {
+                        isCaught = false;
+                        document.getElementById('message-box').style.display = 'none';
+                        document.getElementById('status').innerText = 'فرار کنید! ام‌عباس دوباره دنبالتان کرد...';
+                        umAbbasPos.z -= 15; // دور شدن ام‌عباس
+                    }, 2500);
+                }
+            }
+
             renderer.render(scene, camera);
         }
+
+        window.onload = init;
     </script>
 </body>
 </html>
