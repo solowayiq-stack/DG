@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ام جاسم VS ام عباس</title>
+    <title>نبرد کهنسالان: ام جاسم VS ام عباس</title>
     <style>
         body {
             margin: 0;
@@ -13,11 +13,73 @@
             font-family: Tahoma, sans-serif;
             user-select: none;
         }
+
+        /* استایل‌های صفحه شروع (بنر) */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* آدرس تصویر واقعی که ساختید را اینجا بدهید */
+            background-image: url('cover.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 1s ease-out;
+        }
+
+        #start-screen::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* لایه تیره برای خوانایی متن */
+        }
+
+        .main-title {
+            font-size: 60px;
+            color: #fff;
+            text-shadow: 3px 3px 6px #000;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+            border-bottom: 4px solid #ff4444;
+            padding-bottom: 10px;
+        }
+
+        .play-button {
+            padding: 20px 50px;
+            font-size: 30px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #d9534f;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .play-button:hover {
+            background-color: #c9302c;
+            transform: scale(1.05);
+        }
+
+        /* استایل‌های بازی سه‌بعدی (مخفی در ابتدا) */
         #canvas-container {
             width: 100vw;
             height: 100vh;
             display: block;
+            opacity: 0;
+            transition: opacity 1s ease-in;
         }
+
         #ui-overlay {
             position: absolute;
             top: 20px;
@@ -27,7 +89,9 @@
             text-align: center;
             pointer-events: none;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            display: none; /* در ابتدا مخفی است */
         }
+
         .banner {
             font-size: 28px;
             font-weight: bold;
@@ -35,8 +99,8 @@
             padding: 10px 30px;
             border-radius: 10px;
             border: 2px solid #ff4444;
-            letter-spacing: 1px;
         }
+
         #message-box {
             position: absolute;
             bottom: 30px;
@@ -47,200 +111,195 @@
             font-weight: bold;
             text-shadow: 2px 2px 4px #000;
             pointer-events: none;
+            display: none; /* در ابتدا مخفی است */
         }
     </style>
 </head>
 <body>
 
-    <div id="ui-overlay">
-        <div class="banner">ام جاسم VS ام عباس</div>
+    <!-- صفحه شروع با تصویر بنر واقعی -->
+    <div id="start-screen">
+        <div class="main-title">ام جاسم VS ام عباس</div>
+        <button class="play-button" onclick="startGame()">شروع نبرد</button>
     </div>
-    
-    <div id="message-box">در حال آماده‌سازی نبرد کهنسالان...</div>
 
+    <!-- کانتینر بازی سه‌بعدی (در ابتدا مخفی) -->
+    <div id="ui-overlay">
+        <div class="banner">نبرد آغاز شد!</div>
+    </div>
+    <div id="message-box"></div>
     <div id="canvas-container"></div>
 
-    <!-- بارگذاری کتابخانه Three.js از CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // راه‌اندازی صحنه سه‌بعدی
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a1a);
+        // تابع شروع بازی که با کلیک دکمه فراخوانی می‌شود
+        function startGame() {
+            // مخفی کردن صفحه شروع
+            const startScreen = document.getElementById('start-screen');
+            startScreen.style.opacity = '0';
+            setTimeout(() => startScreen.style.display = 'none', 1000);
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 3, 10);
-        camera.lookAt(0, 1, 0);
+            // نمایش المان‌های بازی
+            document.getElementById('canvas-container').style.opacity = '1';
+            document.getElementById('ui-overlay').style.display = 'block';
+            document.getElementById('message-box').style.display = 'block';
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        container.appendChild(renderer.domElement);
-
-        // نورپردازی محیط خشن و دراماتیک
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0xffeedd, 0.8);
-        dirLight.position.set(5, 10, 7);
-        dirLight.castShadow = true;
-        scene.add(dirLight);
-
-        // زمین خاکی مبارزه
-        const floorGeo = new THREE.PlaneGeometry(20, 20);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.9 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.receiveShadow = true;
-        scene.add(floor);
-
-        // تابع ساخت پیرزن خشن و عصبانی با جزئیات آناتومیک و عصا
-        function createGranny(primaryColor, name) {
-            const grannyGroup = new THREE.Group();
-
-            // بدن خمیده (کمر گرفته)
-            const bodyGeo = new THREE.CylinderGeometry(0.4, 0.5, 1.2, 8);
-            const bodyMat = new THREE.MeshStandardMaterial({ color: primaryColor });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 1.0;
-            body.rotation.z = 0.3; // حالت خمیده به جلو
-            body.castShadow = true;
-            grannyGroup.add(body);
-
-            // سر طبیعی و خشن
-            const headGeo = new THREE.SphereGeometry(0.35, 16, 16);
-            const headMat = new THREE.MeshStandardMaterial({ color: 0xd8b5a0, roughness: 0.8 }); // رنگ پوست طبیعی پیرزن
-            const head = new THREE.Mesh(headGeo, headMat);
-            head.position.set(0.2, 1.8, 0);
-            head.castShadow = true;
-            grannyGroup.add(head);
-
-            // دست‌ها
-            const armGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.0, 8);
-            const armMat = new THREE.MeshStandardMaterial({ color: 0xd8b5a0 });
-            
-            const leftArm = new THREE.Mesh(armGeo, armMat);
-            leftArm.position.set(-0.4, 1.2, 0);
-            leftArm.rotation.z = -0.5;
-            grannyGroup.add(leftArm);
-
-            const rightArm = new THREE.Mesh(armGeo, armMat);
-            rightArm.position.set(0.4, 1.2, 0);
-            rightArm.rotation.z = 0.5;
-            grannyGroup.add(rightArm);
-
-            // عصای چوبی خشن
-            const caneGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.8, 8);
-            const caneMat = new THREE.MeshStandardMaterial({ color: 0x5c4033 });
-            const cane = new THREE.Mesh(caneGeo, caneMat);
-            cane.position.set(0.7, 0.9, 0.3);
-            cane.rotation.z = -0.2;
-            grannyGroup.add(cane);
-
-            grannyGroup.name = name;
-            scene.add(grannyGroup);
-            return grannyGroup;
+            // اجرای کدهای سه بعدی Three.js
+            initThreeJS();
         }
 
-        // ساخت ام جاسم و ام عباس
-        const umJassim = createGranny(0x8b0000, 'Jassim'); // لباس قرمز تیره
-        umJassim.position.set(-1.2, 0, 0);
+        // --- کدهای سه بعدی شما (از قبل) ---
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
 
-        const umAbbas = createGranny(0x00008b, 'Abbas'); // لباس آبی تیره
-        umAbbas.position.set(1.2, 0, 0);
-        umAbbas.rotation.y = Math.PI;
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 3, 10);
+            camera.lookAt(0, 1, 0);
 
-        // شیء دمپایی برای پرتاب به سمت مخاطب
-        const slipperGeo = new THREE.BoxGeometry(0.3, 0.1, 0.6);
-        const slipperMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-        const slipper = new THREE.Mesh(slipperGeo, slipperMat);
-        slipper.visible = false;
-        scene.add(slipper);
-
-        // دندان مصنوعی پرتابی
-        const teethGeo = new THREE.BoxGeometry(0.3, 0.15, 0.2);
-        const teethMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-        const teeth = new THREE.Mesh(teethGeo, teethMat);
-        teeth.visible = false;
-        scene.add(teeth);
-
-        // مدیریت سکانس‌های داستانی بازی بر اساس زمان
-        let clock = new THREE.Clock();
-        const msgBox = document.getElementById('message-box');
-
-        function animate() {
-            requestAnimationFrame(animate);
-            let elapsedTime = clock.getElapsedTime();
-
-            if (elapsedTime < 3) {
-                // مرحله ۱: کشتی گرفتن اولیه و تکان خوردن کمرها
-                msgBox.innerText = "نبرد نفس‌گیر کهنسالان شروع شده...";
-                umJassim.position.x = -0.6 + Math.sin(elapsedTime * 5) * 0.1;
-                umAbbas.position.x = 0.6 - Math.sin(elapsedTime * 5) * 0.1;
-            } 
-            else if (elapsedTime >= 3 && elapsedTime < 5) {
-                // مرحله ۲: ام عباس دمپاییش رو پرت میکنه سمت مخاطب (دوربین)
-                msgBox.innerText = "یا ابالفضل! دمپایی اومد سمت دوربین!";
-                if (!slipper.visible) {
-                    slipper.visible = true;
-                    slipper.position.copy(umAbbas.position);
-                    slipper.position.y += 1.5;
-                }
-                // حرکت دمپایی به سمت دوربین (محور Z مثبت)
-                slipper.position.z += 0.15;
-                slipper.rotation.x += 0.1;
-                slipper.rotation.y += 0.15;
-            } 
-            else if (elapsedTime >= 5 && elapsedTime < 7.5) {
-                // مرحله ۳: ام عباس سوار ام جاسم میشه و با عصا میزنه روی سرش
-                slipper.visible = false;
-                msgBox.innerText = "ام عباس سوار ام جاسم شد و با عصا میزنه توی سرش!";
-                umAbbas.position.set(0, 1.2, 0);
-                umAbbas.rotation.z = 0;
-                umJassim.position.set(0, 0, 0);
-                umJassim.rotation.z = 1.57; // افتادن روی زمین
-            } 
-            else if (elapsedTime >= 7.5 && elapsedTime < 10) {
-                // مرحله ۴: ام جاسم بلند میشه، ام عباس رو میکوبه زمین و برنده میشه
-                msgBox.innerText = "برگشت طوفانی! ام جاسم، ام عباس رو زمین‌کوب کرد!";
-                umJassim.rotation.z = 0;
-                umJassim.position.set(0, 0, 0);
-                umAbbas.position.set(0, 0, 0);
-                umAbbas.rotation.x = 1.57; // ام عباس کف زمین افتاده
-            } 
-            else if (elapsedTime >= 10 && elapsedTime < 12) {
-                // اعلام پیروزی رسمی
-                msgBox.innerText = "🏆 ام جاسم برنده بازی شد! 🏆";
-            }
-            else if (elapsedTime >= 12) {
-                // مرحله ۵: غافلگیری آخر - مشت ام عباس و پرتاب دندان مصنوعی
-                msgBox.innerText = "اما صبر کن! ام عباس انتقام میگیره!";
-                umAbbas.rotation.x = 0;
-                umAbbas.position.set(0, 0, 0);
-                
-                if (!teeth.visible) {
-                    teeth.visible = true;
-                    teeth.position.copy(umAbbas.position);
-                    teeth.position.y += 1.5;
-                }
-                // پرتاب دندان مصنوعی به سمت مخاطب
-                teeth.position.z += 0.2;
-                teeth.rotation.x += 0.2;
-            }
-
-            renderer.render(scene, camera);
-        }
-
-        // واکنش به تغییر اندازه صفحه
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
 
-        // شروع انیمیشن
-        animate();
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffeedd, 0.8);
+            dirLight.position.set(5, 10, 7);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            const floorGeo = new THREE.PlaneGeometry(20, 20);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.9 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            function createGranny(primaryColor, name) {
+                const grannyGroup = new THREE.Group();
+                const bodyGeo = new THREE.CylinderGeometry(0.4, 0.5, 1.2, 8);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: primaryColor });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.y = 1.0;
+                body.rotation.z = 0.3;
+                body.castShadow = true;
+                grannyGroup.add(body);
+
+                const headGeo = new THREE.SphereGeometry(0.35, 16, 16);
+                const headMat = new THREE.MeshStandardMaterial({ color: 0xd8b5a0, roughness: 0.8 });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.set(0.2, 1.8, 0);
+                head.castShadow = true;
+                grannyGroup.add(head);
+
+                const armGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.0, 8);
+                const armMat = new THREE.MeshStandardMaterial({ color: 0xd8b5a0 });
+                const leftArm = new THREE.Mesh(armGeo, armMat);
+                leftArm.position.set(-0.4, 1.2, 0);
+                leftArm.rotation.z = -0.5;
+                grannyGroup.add(leftArm);
+                const rightArm = new THREE.Mesh(armGeo, armMat);
+                rightArm.position.set(0.4, 1.2, 0);
+                rightArm.rotation.z = 0.5;
+                grannyGroup.add(rightArm);
+
+                const caneGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.8, 8);
+                const caneMat = new THREE.MeshStandardMaterial({ color: 0x5c4033 });
+                const cane = new THREE.Mesh(caneGeo, caneMat);
+                cane.position.set(0.7, 0.9, 0.3);
+                cane.rotation.z = -0.2;
+                grannyGroup.add(cane);
+
+                grannyGroup.name = name;
+                scene.add(grannyGroup);
+                return grannyGroup;
+            }
+
+            const umJassim = createGranny(0x8b0000, 'Jassim');
+            umJassim.position.set(-1.2, 0, 0);
+            const umAbbas = createGranny(0x00008b, 'Abbas');
+            umAbbas.position.set(1.2, 0, 0);
+            umAbbas.rotation.y = Math.PI;
+
+            const slipperGeo = new THREE.BoxGeometry(0.3, 0.1, 0.6);
+            const slipperMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            const slipper = new THREE.Mesh(slipperGeo, slipperMat);
+            slipper.visible = false;
+            scene.add(slipper);
+
+            const teethGeo = new THREE.BoxGeometry(0.3, 0.15, 0.2);
+            const teethMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const teeth = new THREE.Mesh(teethGeo, teethMat);
+            teeth.visible = false;
+            scene.add(teeth);
+
+            let clock = new THREE.Clock();
+            const msgBox = document.getElementById('message-box');
+            let animationRunning = true;
+
+            function animate() {
+                if (!animationRunning) return;
+                requestAnimationFrame(animate);
+                let elapsedTime = clock.getElapsedTime();
+
+                if (elapsedTime < 3) {
+                    msgBox.innerText = "نبرد نفس‌گیر کهنسالان شروع شده...";
+                    umJassim.position.x = -0.6 + Math.sin(elapsedTime * 5) * 0.1;
+                    umAbbas.position.x = 0.6 - Math.sin(elapsedTime * 5) * 0.1;
+                } else if (elapsedTime >= 3 && elapsedTime < 5) {
+                    msgBox.innerText = "یا ابالفضل! دمپایی اومد سمت دوربین!";
+                    if (!slipper.visible) {
+                        slipper.visible = true;
+                        slipper.position.copy(umAbbas.position);
+                        slipper.position.y += 1.5;
+                    }
+                    slipper.position.z += 0.15;
+                    slipper.rotation.x += 0.1;
+                    slipper.rotation.y += 0.15;
+                } else if (elapsedTime >= 5 && elapsedTime < 7.5) {
+                    slipper.visible = false;
+                    msgBox.innerText = "ام عباس سوار ام جاسم شد و با عصا میزنه توی سرش!";
+                    umAbbas.position.set(0, 1.2, 0);
+                    umAbbas.rotation.z = 0;
+                    umJassim.position.set(0, 0, 0);
+                    umJassim.rotation.z = 1.57;
+                } else if (elapsedTime >= 7.5 && elapsedTime < 10) {
+                    msgBox.innerText = "برگشت طوفانی! ام جاسم، ام عباس رو زمین‌کوب کرد!";
+                    umJassim.rotation.z = 0;
+                    umJassim.position.set(0, 0, 0);
+                    umAbbas.position.set(0, 0, 0);
+                    umAbbas.rotation.x = 1.57;
+                } else if (elapsedTime >= 10 && elapsedTime < 12) {
+                    msgBox.innerText = "🏆 ام جاسم برنده بازی شد! 🏆";
+                } else if (elapsedTime >= 12 && elapsedTime < 14) {
+                    msgBox.innerText = "اما صبر کن! ام عباس انتقام میگیره!";
+                    umAbbas.rotation.x = 0;
+                    umAbbas.position.set(0, 0, 0);
+                    if (!teeth.visible) {
+                        teeth.visible = true;
+                        teeth.position.copy(umAbbas.position);
+                        teeth.position.y += 1.5;
+                    }
+                    teeth.position.z += 0.2;
+                    teeth.rotation.x += 0.2;
+                } else {
+                    msgBox.innerText = "بازی تمام شد. جهت تکرار صفحه را رفرش کنید.";
+                    animationRunning = false;
+                }
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
     </script>
 </body>
 </html>
